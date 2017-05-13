@@ -12,7 +12,8 @@ board:
 
 run:
 	# python 1_getting_started.py
-	python 2_custom_model.py
+	# python 2_custom_model.py
+	python 3_mnist_softmax.py
 
 install_env: # for osx
 	sudo easy_install pip
