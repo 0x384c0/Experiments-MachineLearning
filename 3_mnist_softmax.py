@@ -33,8 +33,8 @@ mnist = input_data.read_data_sets('tmp/mnist_input_data', one_hot=True)
 
 print "\n----------------- Create the model"
 in_image_pix = tf.placeholder(tf.float32, [None, 784])
-Weigh = tf.Variable(tf.zeros([784, 10]))
-bias = tf.Variable(tf.zeros([10]))
+Weigh = tf.Variable(tf.zeros([784, 10]), name='weights')
+bias = tf.Variable(tf.zeros([10]), name='biases')
 model = tf.matmul(in_image_pix, Weigh) + bias
 
 print "\n----------------- Define loss and optimizer"
