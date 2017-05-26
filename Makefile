@@ -12,11 +12,14 @@ board:
 run:
 	# python 1_getting_started.py
 	# python 2_custom_model.py
-	python 3_mnist_softmax.py
+	# python 3_mnist_softmax.py
 	# python 4_multi_CNN.py
 	# python 5_iris_classifier.py
 	# python 6_word2vec_basic.py
+	python 7_lstm_fixed_sequence_length.py
+	# python 8_lstm_variable_sequence_length.py
 
+#magenta
 magenta_install:
 	pip install magenta
 
