@@ -10,9 +10,30 @@ from helpers import *
 # ==============================================================================
 
 print "\n----------------- BEFORE TRAIN"
-
-train_sentence = "string"
 nb_epoches = 50
+# bacth  ------------------------------------------------------------------------------------
+# batch_of_sentences = [
+# "- string 23$$$",
+# "- string 42$$$",
+# "- string 52323",
+# "- string 0$$$$",
+# "- string 86464",
+# "- string 933$$",
+# ]
+# batch_size = len(batch_of_sentences)
+
+# vocab, vocab_rev = create_vocabulary_from_batch(batch_of_sentences)
+# X_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab)
+# num_classes = len(vocab) # number of unique ids
+# hidden_size = num_classes
+# sequence_length = len(X_data[0]) # FIXED LENGHT
+
+# X_data_one_hot = data_array_to_one_hot_from_batch(X_data, vocab)
+# Y_data = X_data #train data for loss calc
+# ----------------------------------------------------------------------------------------
+
+# single ------------------------------------------------------------------------------------
+train_sentence = "- string 52323"
 batch_size = 1
 
 vocab, vocab_rev = create_vocabulary(train_sentence)
@@ -23,7 +44,7 @@ sequence_length = len(X_data) # FIXED LENGHT
 
 X_data_one_hot = [data_array_to_one_hot(X_data, vocab)]
 Y_data = [X_data] #train data for loss calc
-
+# -------------------------------------------------------------------------------------------
 
 print "Vocabulary"
 print(vocab)
@@ -34,6 +55,7 @@ print_one_hot(X_data_one_hot)
 
 
 # ==============================================================================
+
 X = tf.placeholder(tf.float32, [None, sequence_length, hidden_size]) # X onehot
 Y = tf.placeholder(tf.int32, [None, sequence_length])
 
@@ -42,7 +64,6 @@ cell = BasicLSTMCell(num_units=hidden_size)
 initial_state = cell.zero_state(batch_size, tf.float32)
 outputs_d_rnn, _states = tf.nn.dynamic_rnn(cell,
                                      X,
-                                     # sequence_length=[2], #output lenght
                                      initial_state=initial_state,
                                      dtype=tf.float32)
 
@@ -67,37 +88,46 @@ prediction = tf.argmax(outputs, axis=2)
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     X_in = X_data_one_hot
-    X_in_seed = [np.zeros((sequence_length, num_classes))] # seed data
-    X_in_seed[0][0][(X_data[0])] = 1
+    X_in_seed = X_in#[np.zeros((sequence_length, num_classes))] # seed data
+    # X_in_seed[0][0][(X_data[0])] = 1
     print "\n----------------- TRAINING"
 
     for i in range(nb_epoches):
-        l, _ = sess.run([loss, train], feed_dict={X: X_in, Y: Y_data})
+        l, _ = sess.run([loss, train], feed_dict={X: X_in, Y: Y_data}) 
         if i % (nb_epoches/10) == 0:
-            result = sess.run(prediction, feed_dict={X: X_in_seed})
+            result = sess.run(prediction, feed_dict={X: X_in_seed, })
             print "step: %3d loss: %2.6f prediction: %s true Y: %s" % (i,l,result,Y_data)
 
     print "\n----------------- AFTER TRAIN"
     # step by step model eval
 
 
-    outputs_d_rnn_out   = sess.run(outputs_d_rnn,   { X             : X_in_seed })
-    X_for_fc_out        = sess.run(X_for_fc,        { outputs_d_rnn : outputs_d_rnn_out })
-    outputs_fc_out      = sess.run(outputs_fc,      { X_for_fc      : X_for_fc_out })
-    outputs_out         = sess.run(outputs,         { outputs_fc    : outputs_fc_out })
-    prediction_out      = sess.run(prediction,      { outputs       : outputs_out })
+    outputs_d_rnn_out   = sess.run(outputs_d_rnn,   { X             : X_in_seed                                             })
+    X_for_fc_out        = sess.run(X_for_fc,        { outputs_d_rnn : outputs_d_rnn_out                                     })
+    outputs_fc_out      = sess.run(outputs_fc,      { X_for_fc      : X_for_fc_out                                          })
+    outputs_out         = sess.run(outputs,         { outputs_fc    : outputs_fc_out                                        })
+    prediction_out      = sess.run(prediction,      { outputs       : outputs_out                                           })
 
-    # print "outputs_d_rnn_out"
+    sequence_loss_out   = sess.run(sequence_loss,   { outputs       : outputs_out,          Y                     : Y_data  })
+    loss_out            = sess.run(loss,            { sequence_loss : sequence_loss_out                                     })
+
+    # print "\noutputs_d_rnn_out"
     # print outputs_d_rnn_out
 
-    # print "X_for_fc_out"
+    # print "\nX_for_fc_out"
     # print X_for_fc_out
 
-    # print "outputs_fc_out"
+    # print "\noutputs_fc_out"
     # print outputs_fc_out
 
-    print "Predicted Data one hot"
+    # print "\nsequence_loss_out"
+    # print sequence_loss_out
+
+    # print "\nloss_out"
+    # print loss_out
+
+    print "\nPredicted Data one hot"
     print_one_hot(outputs_out)
 
-    print "Result:"
+    print "\nResult:"
     print token_ids_to_sentence(prediction_out,vocab_rev)

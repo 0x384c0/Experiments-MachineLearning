@@ -17,7 +17,16 @@ def conv2d(x, W):
 def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                         strides=[1, 2, 2, 1], padding='SAME')
+def pad_strings(strings,pad_symbol="$"):
+  result = []
+  max_len = 0
+  for string in strings:
+    if max_len < len(string):
+      max_len = len(string)
 
+  for string in strings:
+    result.append(string + (pad_symbol * (max_len - len(string))))
+  return result
 
 
 # ============================================================================== rnn
@@ -51,4 +60,49 @@ def data_array_to_one_hot(data_array, vocab_array):
     token_ids_one_hot = np.zeros((len(data_array), len(vocab_array)))
     token_ids_one_hot[np.arange(len(data_array)), data_array] = 1
     return token_ids_one_hot
+
+
+
+def create_vocabulary_from_batch(batch):
+    vocab = {}
+    for i in range(len(batch)):
+        sequence = batch[i]
+        for i in range(len(sequence)):
+            ch = sequence[i]
+            if ch in vocab:
+                vocab[ch] += 1
+            else:
+                vocab[ch] = 1
+    vocab_rev = sorted(vocab, key=vocab.get, reverse=True)
+    vocab = dict([(x, y) for (y, x) in enumerate(vocab_rev)])
+    return vocab, vocab_rev
+
+
+def sentence_to_token_ids_from_batch(batch, vocabulary):
+    characters_batch = []
+    for sentence in batch:
+      characters_batch.append(sentence_to_token_ids(sentence,vocabulary))
+    return characters_batch
+
+def data_array_to_one_hot_from_batch(batch, vocab_array):
+    batch_of_token_ids_one_hot = []
+    for data_array in batch:
+      batch_of_token_ids_one_hot.append(data_array_to_one_hot(data_array,vocab_array))
+    return batch_of_token_ids_one_hot
+
+
+# Lazy Property Decorator
+import functools
+def define_scope(function):
+    attribute = '_cache_' + function.__name__
+    
+    @property
+    @functools.wraps(function)
+    def decorator(self):
+        if not hasattr(self, attribute):
+            with tf.variable_scope(function.__name__):
+                setattr(self, attribute, function(self))
+        return getattr(self, attribute)
+
+    return decorator
 # ==============================================================================
