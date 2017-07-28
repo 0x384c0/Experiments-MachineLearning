@@ -1,0 +1,15 @@
+The possibility of learning has attracted the most interest in neural networks. Given a specific task to solve, and a class of functions 
+
+The cost function 
+C is an important concept in learning, as it is a measure of how far away a particular solution is from an optimal solution to the problem to be solved. Learning algorithms search through the solution space to find a function that has the smallest possible cost.
+
+For applications where the solution is data dependent, the cost must necessarily be a function of the observations, otherwise the model would not relate to the data. It is frequently defined as a statistic to which only approximations can be made. As a simple example, consider the problem of finding the model 
+
+Choosing a cost function[edit]
+While it is possible to define an ad hoc cost function, frequently a particular cost (function) is used, either because it has desirable properties (such as convexity) or because it arises naturally from a particular formulation of the problem (e.g., in a probabilistic formulation the posterior probability of the model can be used as an inverse cost). Ultimately, the cost function depends on the task.
+
+ Backpropagation[edit]
+Main article: Backpropagation
+A DNN can be discriminatively trained with the standard backpropagation algorithm. Backpropagation is a method to calculate the gradient of the loss function (produces the cost associated with a given state) with respect to the weights in an ANN.
+
+The basics of continuous backpropagation were derived in the context of control theory by Kelley in 1960 and by Bryson in 1961, using principles of dynamic programming. In 1962, Dreyfus published a simpler derivation based only on the chain rule. Bryson and Ho described it as a multi-stage dynamic system optimization method in 1969. In 1970, Linnainmaa finally published the general method for automatic differentiation (AD) of discrete connected networks of nested differentiable functions. This corresponds to the modern version of backpropagation which is efficient even when the networks are sparse. In 1973, Dreyfus used backpropagation to adapt parameters of controllers in proportion to error gradients. In 1974, Werbos mentioned the possibility of applying this principle to ANNs, and in 1982, he applied Linnainmaa's AD method to neural networks in the way that is widely used today. In 1986, Rumelhart, Hinton and Williams noted that this method can generate useful internal representations of incoming data in hidden layers of neural networks. In 1993, Wan was the first to win an international pattern recognition contest through backpropagation

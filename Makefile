@@ -2,8 +2,8 @@ all:
 	$(MAKE) run
 
 setup: 
-	source bin/activate
 	export TF_CPP_MIN_LOG_LEVEL=2
+	echo "RUN THIS COMMAND:\nsource bin/activate"
 
 board:
 	tensorboard --logdir=tmp/
@@ -71,8 +71,9 @@ magenta_poly_train_board:
 
 # for osx
 install_env: 
-	sudo easy_install pip
-	virtualenv --system-site-packages -p python3 $PWD
+	# sudo easy_install pip
+	# sudo pip install --upgrade virtualenv
 	alias virtualenv='~/Library/Python/2.7/bin/virtualenv'
+	virtualenv --system-site-packages $PWD
 	$(MAKE) setup
-	pip install --user --upgrade virtualenv
+	print "pip install --upgrade tensorflow"

@@ -108,9 +108,11 @@ with tf.Session() as sess:
 
   print "\n----------------- TRAINING"
   if glob.glob(chenckpoint_file + "*"):
+    model_was_trained = False
     modelPath = saver.restore(sess, chenckpoint_file)
     print "\n----------------- Skip training. Loaded from: " + chenckpoint_file
   else:
+    model_was_trained = True
     for i in range(nb_epoches):
       for item in Y_data:
         item = [item]
@@ -121,9 +123,10 @@ with tf.Session() as sess:
         print "step: %3d loss: %2.6f prediction: %s first true Y: %s" % (i,l,result,Y_data[0])
 
   print "\n----------------- AFTER TRAIN"
-  writer = tf.summary.FileWriter("tmp/basic", sess.graph)
-  save_path = saver.save(sess, chenckpoint_file)
-  print("Model saved in file: %s" % save_path)
+  if model_was_trained:
+    writer = tf.summary.FileWriter("tmp/basic", sess.graph)
+    save_path = saver.save(sess, chenckpoint_file)
+    print("Model saved in file: %s" % save_path)
 
   print "\nResult:"
   result = sess.run(model.prediction, feed_dict={model.X: X_data_one_hot, })
