@@ -2,8 +2,8 @@ all:
 	$(MAKE) run
 
 setup: 
-	export TF_CPP_MIN_LOG_LEVEL=2
-	echo "RUN THIS COMMAND:\nsource bin/activate"
+	
+	echo "RUN THIS COMMANDS:\nexport TF_CPP_MIN_LOG_LEVEL=2\nsource bin/activate"
 
 board:
 	tensorboard --logdir=tmp/
@@ -53,7 +53,7 @@ magenta_poly_gen:
 		--primer_pitches="[67,64,60]" \
 		--condition_on_primer=true \
 		--inject_primer_during_generation=false \
-		--hparams="{'batch_size':64,'rnn_layer_sizes':[64,64]}" \
+		--hparams="batch_size=64,rnn_layer_sizes=[64,64]" \
 		--run_dir=tmp/polyphony_rnn/logdir/run1
 		# --bundle_file=tmp/magenta-models/polyphony_rnn.mag
 
@@ -61,7 +61,7 @@ magenta_poly_train:
 	polyphony_rnn_train \
 		--run_dir=tmp/polyphony_rnn/logdir/run1 \
 		--sequence_example_file=tmp/polyphony_rnn/sequence_examples/training_poly_tracks.tfrecord \
-		--hparams="{'batch_size':64,'rnn_layer_sizes':[64,64]}" \
+		--hparams="batch_size=64,rnn_layer_sizes=[64,64]" \
 		--num_training_steps=1000
 
 magenta_poly_train_board:
@@ -72,8 +72,7 @@ magenta_poly_train_board:
 # for osx
 install_env: 
 	# sudo easy_install pip
-	# sudo pip install --upgrade virtualenv
-	alias virtualenv='~/Library/Python/2.7/bin/virtualenv'
+	pip install --upgrade virtualenv
 	virtualenv --system-site-packages $PWD
 	$(MAKE) setup
 	print "pip install --upgrade tensorflow"
