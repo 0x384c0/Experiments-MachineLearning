@@ -1,8 +1,10 @@
 all:
 	$(MAKE) run
 
+clean:
+	rm -rf tmp/*
+
 setup: 
-	
 	echo "RUN THIS COMMANDS:\nexport TF_CPP_MIN_LOG_LEVEL=2\nsource bin/activate"
 
 board:
@@ -16,8 +18,8 @@ run:
 	# python 4_multi_CNN.py
 	# python 5_iris_classifier.py
 	# python 6_word2vec_basic.py
-	python 7_lstm_fixed_sequence_length.py
-	# python 8_lstm_variable_sequence_length.py
+	# python 7_lstm_fixed_sequence_length.py
+	python 8_lstm_variable_sequence_length.py
 
 #magenta
 magenta_install:

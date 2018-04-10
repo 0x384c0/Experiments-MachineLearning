@@ -77,10 +77,11 @@ def create_vocabulary_from_batch(batch):
         sequence = batch[i]
         for i in range(len(sequence)):
             ch = sequence[i]
-            if ch in vocab:
-                vocab[ch] += 1
-            else:
-                vocab[ch] = 1
+            vocab[ch] = 1
+            # if ch in vocab:
+            #     vocab[ch] += 1
+            # else:
+            #     vocab[ch] = 1
     vocab_rev = sorted(vocab, key=vocab.get, reverse=True)
     vocab = dict([(x, y) for (y, x) in enumerate(vocab_rev)])
     return vocab, vocab_rev
@@ -98,13 +99,14 @@ def data_array_to_one_hot_from_batch(batch, vocab_array):
       batch_of_token_ids_one_hot.append(data_array_to_one_hot(data_array,vocab_array))
     return batch_of_token_ids_one_hot
 
-def read_file_to_batch_array(file_name):
+def read_file_to_array_of_lines(file_name):
   return [line.rstrip('\n') for line in open(file_name)]
-  # with open(file_name) as f:
-  #   content = f.readlines()
-  # # you may also want to remove whitespace characters like `\n` at the end of each line
-  # # [line.rstrip('\n') for line in open('filename')]
-  # return content
+
+def read_files_to_array_of_strings(file_names):
+  strings = []
+  for file_name in file_names:
+    strings.append(open(file_name).read())
+  return strings
 
 # Lazy Property Decorator
 import functools

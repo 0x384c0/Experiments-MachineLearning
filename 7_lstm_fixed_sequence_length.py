@@ -21,7 +21,7 @@ nb_epoches = 50
 # "- string 86464",
 # "- string 933$$",
 # ]
-batch_of_sentences = read_file_to_batch_array("train_data/batch_circle.txt")
+batch_of_sentences = read_file_to_array_of_strings("train_data/batch_circle.txt")
 # ----------------------------------------------------------------------------------------
 batch_size = len(batch_of_sentences)
 if batch_size == 1:
