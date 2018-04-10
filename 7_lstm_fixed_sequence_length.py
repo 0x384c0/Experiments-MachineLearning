@@ -11,40 +11,42 @@ from helpers import *
 
 print "\n----------------- BEFORE TRAIN"
 nb_epoches = 50
-# bacth  ------------------------------------------------------------------------------------
-# batch_of_sentences = [
-# "- string 23$$$",
-# "- string 42$$$",
-# "- string 52323",
-# "- string 0$$$$",
-# "- string 86464",
-# "- string 933$$",
-# ]
-# batch_size = len(batch_of_sentences)
+# train data  ------------------------------------------------------------------------------------batch_of_sentences = [
+# batch_of_sentences = ["- string 2323458"]
+batch_of_sentences = [
+"- string 23$$$",
+"- string 42$$$",
+"- string 52323",
+"- string 0$$$$",
+"- string 86464",
+"- string 933$$",
+]
+batch_size = len(batch_of_sentences)
 
-# vocab, vocab_rev = create_vocabulary_from_batch(batch_of_sentences)
-# X_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab)
-# num_classes = len(vocab) # number of unique ids
-# hidden_size = num_classes
-# sequence_length = len(X_data[0]) # FIXED LENGHT
+if batch_size == 1:
+# single ------------------------------------------------------------------------------------
+    train_sentence = batch_of_sentences[0]
+    vocab, vocab_rev = create_vocabulary(train_sentence)
+    X_data = sentence_to_token_ids(train_sentence, vocab)
+    num_classes = len(vocab) # number of unique ids
+    hidden_size = num_classes
+    sequence_length = len(X_data) # FIXED LENGHT
 
-# X_data_one_hot = data_array_to_one_hot_from_batch(X_data, vocab)
-# Y_data = X_data #train data for loss calc
+    X_data_one_hot = [data_array_to_one_hot(X_data, vocab)]
+    Y_data = [X_data] #train data for loss calc
+else:
+# batch -------------------------------------------------------------------------------------------
+    vocab, vocab_rev = create_vocabulary_from_batch(batch_of_sentences)
+    X_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab)
+    num_classes = len(vocab) # number of unique ids
+    hidden_size = num_classes
+    sequence_length = len(X_data[0]) # FIXED LENGHT
+
+    X_data_one_hot = data_array_to_one_hot_from_batch(X_data, vocab)
+    Y_data = X_data #train data for loss calc
 # ----------------------------------------------------------------------------------------
 
-# single ------------------------------------------------------------------------------------
-train_sentence = "- string 52323"
-batch_size = 1
 
-vocab, vocab_rev = create_vocabulary(train_sentence)
-X_data = sentence_to_token_ids(train_sentence, vocab)
-num_classes = len(vocab) # number of unique ids
-hidden_size = num_classes
-sequence_length = len(X_data) # FIXED LENGHT
-
-X_data_one_hot = [data_array_to_one_hot(X_data, vocab)]
-Y_data = [X_data] #train data for loss calc
-# -------------------------------------------------------------------------------------------
 
 print "Vocabulary"
 print(vocab)

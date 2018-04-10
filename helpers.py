@@ -53,7 +53,19 @@ def sentence_to_token_ids(sentence, vocabulary):
     return [vocabulary.get(w) for w in characters]
 
 def token_ids_to_sentence(ids, vocabulary_rev):
-    return ''.join([vocabulary_rev[c] for c in np.squeeze(ids)])
+    ids_squeezed = np.squeeze(ids)
+    if isinstance(ids_squeezed[0], np.ndarray):
+      result = ''
+      print "ids_squeezed"
+      print ids_squeezed
+      for ids_arr in ids:
+        # print "ids_arr"
+        # print ids_arr
+        result += "\n"
+        result += ''.join([vocabulary_rev[c] for c in ids_arr])
+      return result
+    else:
+      return ''.join([vocabulary_rev[c] for c in ids_squeezed])
 
 
 def data_array_to_one_hot(data_array, vocab_array):
