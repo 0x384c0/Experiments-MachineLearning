@@ -56,11 +56,7 @@ def token_ids_to_sentence(ids, vocabulary_rev):
     ids_squeezed = np.squeeze(ids)
     if isinstance(ids_squeezed[0], np.ndarray):
       result = ''
-      print "ids_squeezed"
-      print ids_squeezed
       for ids_arr in ids:
-        # print "ids_arr"
-        # print ids_arr
         result += "\n"
         result += ''.join([vocabulary_rev[c] for c in ids_arr])
       return result
@@ -102,6 +98,13 @@ def data_array_to_one_hot_from_batch(batch, vocab_array):
       batch_of_token_ids_one_hot.append(data_array_to_one_hot(data_array,vocab_array))
     return batch_of_token_ids_one_hot
 
+def read_file_to_batch_array(file_name):
+  return [line.rstrip('\n') for line in open(file_name)]
+  # with open(file_name) as f:
+  #   content = f.readlines()
+  # # you may also want to remove whitespace characters like `\n` at the end of each line
+  # # [line.rstrip('\n') for line in open('filename')]
+  # return content
 
 # Lazy Property Decorator
 import functools

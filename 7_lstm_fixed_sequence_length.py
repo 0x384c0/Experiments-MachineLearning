@@ -13,16 +13,17 @@ print "\n----------------- BEFORE TRAIN"
 nb_epoches = 50
 # train data  ------------------------------------------------------------------------------------batch_of_sentences = [
 # batch_of_sentences = ["- string 2323458"]
-batch_of_sentences = [
-"- string 23$$$",
-"- string 42$$$",
-"- string 52323",
-"- string 0$$$$",
-"- string 86464",
-"- string 933$$",
-]
+# batch_of_sentences = [
+# "- string 23$$$",
+# "- string 42$$$",
+# "- string 52323",
+# "- string 0$$$$",
+# "- string 86464",
+# "- string 933$$",
+# ]
+batch_of_sentences = read_file_to_batch_array("train_data/batch_circle.txt")
+# ----------------------------------------------------------------------------------------
 batch_size = len(batch_of_sentences)
-
 if batch_size == 1:
 # single ------------------------------------------------------------------------------------
     train_sentence = batch_of_sentences[0]
@@ -99,19 +100,20 @@ with tf.Session() as sess:
         if i % (nb_epoches/10) == 0:
             result = sess.run(prediction, feed_dict={X: X_in_seed, })
             print "step: %3d loss: %2.6f prediction: %s true Y: %s" % (i,l,result,Y_data)
+            print token_ids_to_sentence(result,vocab_rev)
 
     print "\n----------------- AFTER TRAIN"
     # step by step model eval
 
 
-    outputs_d_rnn_out   = sess.run(outputs_d_rnn,   { X             : X_in_seed                                             })
-    X_for_fc_out        = sess.run(X_for_fc,        { outputs_d_rnn : outputs_d_rnn_out                                     })
-    outputs_fc_out      = sess.run(outputs_fc,      { X_for_fc      : X_for_fc_out                                          })
-    outputs_out         = sess.run(outputs,         { outputs_fc    : outputs_fc_out                                        })
-    prediction_out      = sess.run(prediction,      { outputs       : outputs_out                                           })
+    outputs_d_rnn_out   = sess.run(outputs_d_rnn,   { X             : X_in_seed                         })
+    X_for_fc_out        = sess.run(X_for_fc,        { outputs_d_rnn : outputs_d_rnn_out                 })
+    outputs_fc_out      = sess.run(outputs_fc,      { X_for_fc      : X_for_fc_out                      })
+    outputs_out         = sess.run(outputs,         { outputs_fc    : outputs_fc_out                    })
+    prediction_out      = sess.run(prediction,      { outputs       : outputs_out                       })
 
-    sequence_loss_out   = sess.run(sequence_loss,   { outputs       : outputs_out,          Y                     : Y_data  })
-    loss_out            = sess.run(loss,            { sequence_loss : sequence_loss_out                                     })
+    sequence_loss_out   = sess.run(sequence_loss,   { outputs       : outputs_out,          Y : Y_data  })
+    loss_out            = sess.run(loss,            { sequence_loss : sequence_loss_out                 })
 
     # print "\noutputs_d_rnn_out"
     # print outputs_d_rnn_out
