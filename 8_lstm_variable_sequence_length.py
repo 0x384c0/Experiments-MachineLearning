@@ -9,41 +9,44 @@ from tensorflow.contrib.seq2seq import sequence_loss
 import numpy as np
 from helpers import *
 # ==============================================================================
-learn_quality_multiplier = 10
+learn_quality_multiplier = 30
 nb_epoches = 50 * learn_quality_multiplier
-learning_rate = 0.01 / learn_quality_multiplier
+learning_rate = 0.5# / learn_quality_multiplier
 #
 batch_size = 1
 chenckpoint_file = "tmp/LSTM_Model.ckpt"
 pad_symbol="$"
 # ================================ train data ==================================
-batch_of_sentences = [
-"- string 68",
-"- string 2388",
-"- string 62323",
-"- string 6",
-"- string 66468",
-"+ rsting 538",
-"+ rsting 528",
-"+ rsting 338",
-"+ rsting 638",
-"+ rsting 228",
-]
-# batch_of_sentences = read_files_to_array_of_strings([
-#   "train_data/batch_circle.txt",
-#   "train_data/batch_circle.txt",
-#   "train_data/batch_circle.txt",
-#   "train_data/batch_cross.txt",
-#   "train_data/batch_cross.txt",
-#   "train_data/batch_cross.txt",
-#   ])
+# batch_of_sentences = [
+# "- string 68",
+# "- string 2388",
+# "- string 62323",
+# "- string 6",
+# "- string 66468",
+# "+ rsting 538",
+# "+ rsting 528",
+# "+ rsting 338",
+# "+ rsting 638",
+# "+ rsting 228",
+# ]
+batch_of_sentences = read_files_to_array_of_strings([
+  "train_data/batch_half.txt",
+  "train_data/batch_half.txt",
+  "train_data/batch_half.txt",
+  "train_data/batch_half.txt",
+  # "train_data/batch_circle.txt",
+  # "train_data/batch_circle.txt",
+  # "train_data/batch_circle.txt",
+  # "train_data/batch_cross.txt",
+  # "train_data/batch_cross.txt",
+  # "train_data/batch_cross.txt",
+  ])
 # ==============================================================================
 print "\n----------------- BEFORE TRAIN"
 batch_of_sentences = pad_strings(batch_of_sentences,pad_symbol)
 number_of_train_samples = len(batch_of_sentences)
 
-vocab, vocab_rev = create_vocabulary_from_batch(batch_of_sentences)
-num_classes = len(vocab) # number of unique ids
+vocab, vocab_rev, num_classes = create_vocabulary_from_batch(batch_of_sentences)
 hidden_size = num_classes
 
 #train data
@@ -53,7 +56,7 @@ train_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab) #train 
 input_data = sentence_to_token_ids(batch_of_sentences[0], vocab) #take first sentence
 sequence_length = len(input_data) # maximum length of sentences
 Input_data_one_hot = [np.zeros((sequence_length, num_classes))] # seed data
-Input_data_one_hot[0][0][(input_data[0])] = 1 #first symbol of first sentence
+Input_data_one_hot[0][0][(input_data[-1])] = 1 #first symbol of first sentence
 
 print "batch_of_sentences"
 print batch_of_sentences
@@ -88,8 +91,16 @@ class LSTM_Model:
                                          self.Input_data,
                                          initial_state=initial_state,
                                          dtype=tf.float32)
+
+    X_for_fc = tf.reshape(outputs_d_rnn, [-1, hidden_size])
+    outputs_fc = fully_connected(inputs=X_for_fc,
+                              num_outputs=num_classes,
+                              activation_fn=None)
+    outputs = tf.reshape(outputs_fc, [batch_size, sequence_length, num_classes])
+    return outputs
+
     # outputs_d_rnn = tf.Print(outputs_d_rnn,[outputs_d_rnn],"\n--PRINT-- outputs_d_rnn:\n",summarize=1000)
-    return outputs_d_rnn
+    # return outputs_d_rnn
 
   @define_scope
   def prediction(self):
@@ -113,7 +124,7 @@ class LSTM_Model:
 
   @define_scope
   def train(self):
-    train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss)
+    train = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(self.loss)
     return train
 
 # ==============================================================================

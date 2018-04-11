@@ -27,9 +27,8 @@ batch_size = len(batch_of_sentences)
 if batch_size == 1:
 # single ------------------------------------------------------------------------------------
     train_sentence = batch_of_sentences[0]
-    vocab, vocab_rev = create_vocabulary(train_sentence)
+    vocab, vocab_rev, num_classes = create_vocabulary(train_sentence)
     X_data = sentence_to_token_ids(train_sentence, vocab)
-    num_classes = len(vocab) # number of unique ids
     hidden_size = num_classes
     sequence_length = len(X_data) # FIXED LENGHT
 
@@ -37,9 +36,8 @@ if batch_size == 1:
     Y_data = [X_data] #train data for loss calc
 else:
 # batch -------------------------------------------------------------------------------------------
-    vocab, vocab_rev = create_vocabulary_from_batch(batch_of_sentences)
+    vocab, vocab_rev, num_classes = create_vocabulary_from_batch(batch_of_sentences)
     X_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab)
-    num_classes = len(vocab) # number of unique ids
     hidden_size = num_classes
     sequence_length = len(X_data[0]) # FIXED LENGHT
 

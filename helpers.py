@@ -31,75 +31,77 @@ def pad_strings(strings,pad_symbol="$"):
 
 # ============================================================================== rnn
 def print_one_hot(one_hot):
-    for array in one_hot[0]:
-        # print(" ".join(map(lambda value: '%f' % value, array)),"  max_value ",max(array),"  max_value_index", array.argmax())
-        print "%s \tmax_value: %f, \tmax_value_index: %d" % ("\t".join(map(lambda value: "% 2.2f" % (value), array)),max(array),array.argmax())
+  for array in one_hot[0]:
+    # print(" ".join(map(lambda value: '%f' % value, array)),"  max_value ",max(array),"  max_value_index", array.argmax())
+    print "%s \tmax_value: %f, \tmax_value_index: %d" % ("\t".join(map(lambda value: "% 2.2f" % (value), array)),max(array),array.argmax())
 
-def create_vocabulary(sequence):
-    vocab = {}
-    for i in range(len(sequence)):
-        ch = sequence[i]
-        if ch in vocab:
-            vocab[ch] += 1
-        else:
-            vocab[ch] = 1
-    vocab_rev = sorted(vocab, key=vocab.get, reverse=True)
-    vocab = dict([(x, y) for (y, x) in enumerate(vocab_rev)])
-    return vocab, vocab_rev
+def data_array_to_one_hot(data_array, vocab_array):
+  token_ids_one_hot = np.zeros((len(data_array), len_of_vocab(vocab_array)))
+  token_ids_one_hot[np.arange(len(data_array)), data_array] = 1
+  return token_ids_one_hot
+
+
+def data_array_to_one_hot_from_batch(batch, vocab_array):
+  batch_of_token_ids_one_hot = []
+  for data_array in batch:
+    batch_of_token_ids_one_hot.append(data_array_to_one_hot(data_array,vocab_array))
+  return batch_of_token_ids_one_hot
+
+# vocabulary
+vocab_start_id = 1
+def len_of_vocab(vocab):
+  return len(vocab) + vocab_start_id
+
+def create_vocabulary(string):
+  vocab = {}
+  char_id = vocab_start_id
+  for char in string:
+    if char not in vocab:
+      vocab[char] = char_id
+      char_id += 1
+
+  vocab_rev = {v: k for k, v in vocab.iteritems()}
+
+  return vocab, vocab_rev, len_of_vocab(vocab)
+
+def create_vocabulary_from_batch(batch):
+  vocab = {}
+  char_id = vocab_start_id
+  for string in batch:
+    for char in string:
+      if char not in vocab:
+        vocab[char] = char_id
+        char_id += 1
+
+  vocab_rev = {v: k for k, v in vocab.iteritems()}
+
+  return vocab, vocab_rev, len_of_vocab(vocab)
 
 
 def sentence_to_token_ids(sentence, vocabulary):
-    characters = [sentence[i:i+1] for i in range(0, len(sentence), 1)]
-    return [vocabulary.get(w) for w in characters]
+  characters = [sentence[i:i+1] for i in range(0, len(sentence), 1)]
+  return [vocabulary.get(w) for w in characters]
+    
+def sentence_to_token_ids_from_batch(batch, vocabulary):
+  characters_batch = []
+  for sentence in batch:
+    characters_batch.append(sentence_to_token_ids(sentence,vocabulary))
+  return characters_batch
 
 def token_ids_to_sentence(ids, vocabulary_rev):
-    ids_squeezed = np.squeeze(ids)
-    if isinstance(ids_squeezed[0], np.ndarray):
-      result = ''
-      for ids_arr in ids:
-        result += "\n"
-        result += ''.join([vocabulary_rev[c] for c in ids_arr])
-      return result
-    else:
-      return ''.join([vocabulary_rev[c] for c in ids_squeezed])
+  ids_squeezed = np.squeeze(ids)
+  if isinstance(ids_squeezed[0], np.ndarray):
+    result = ''
+    for ids_arr in ids:
+      result += "\n"
+      result += ''.join([vocabulary_rev[c] for c in ids_arr])
+    return result
+  else:
+    return ''.join([vocabulary_rev[c] for c in ids_squeezed])
 
+# files
 
-def data_array_to_one_hot(data_array, vocab_array):
-    token_ids_one_hot = np.zeros((len(data_array), len(vocab_array)))
-    token_ids_one_hot[np.arange(len(data_array)), data_array] = 1
-    return token_ids_one_hot
-
-
-
-def create_vocabulary_from_batch(batch):
-    vocab = {}
-    for i in range(len(batch)):
-        sequence = batch[i]
-        for i in range(len(sequence)):
-            ch = sequence[i]
-            vocab[ch] = 1
-            # if ch in vocab:
-            #     vocab[ch] += 1
-            # else:
-            #     vocab[ch] = 1
-    vocab_rev = sorted(vocab, key=vocab.get, reverse=True)
-    vocab = dict([(x, y) for (y, x) in enumerate(vocab_rev)])
-    return vocab, vocab_rev
-
-
-def sentence_to_token_ids_from_batch(batch, vocabulary):
-    characters_batch = []
-    for sentence in batch:
-      characters_batch.append(sentence_to_token_ids(sentence,vocabulary))
-    return characters_batch
-
-def data_array_to_one_hot_from_batch(batch, vocab_array):
-    batch_of_token_ids_one_hot = []
-    for data_array in batch:
-      batch_of_token_ids_one_hot.append(data_array_to_one_hot(data_array,vocab_array))
-    return batch_of_token_ids_one_hot
-
-def read_file_to_array_of_lines(file_name):
+def read_file_to_array_of_strings(file_name):
   return [line.rstrip('\n') for line in open(file_name)]
 
 def read_files_to_array_of_strings(file_names):
@@ -111,15 +113,15 @@ def read_files_to_array_of_strings(file_names):
 # Lazy Property Decorator
 import functools
 def define_scope(function):
-    attribute = '_cache_' + function.__name__
-    
-    @property
-    @functools.wraps(function)
-    def decorator(self):
-        if not hasattr(self, attribute):
-            with tf.variable_scope(function.__name__):
-                setattr(self, attribute, function(self))
-        return getattr(self, attribute)
+  attribute = '_cache_' + function.__name__
+  
+  @property
+  @functools.wraps(function)
+  def decorator(self):
+    if not hasattr(self, attribute):
+      with tf.variable_scope(function.__name__):
+        setattr(self, attribute, function(self))
+    return getattr(self, attribute)
 
-    return decorator
+  return decorator
 # ==============================================================================
