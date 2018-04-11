@@ -9,10 +9,12 @@ from tensorflow.contrib.seq2seq import sequence_loss
 import numpy as np
 from helpers import *
 # ==============================================================================
-chenckpoint_file = "tmp/LSTM_Model.ckpt"
-nb_epoches = 50 * 30
+learn_quality_multiplier = 10
+nb_epoches = 50 * learn_quality_multiplier
+learning_rate = 0.01 / learn_quality_multiplier
+#
 batch_size = 1
-learning_rate = 0.1 / 30
+chenckpoint_file = "tmp/LSTM_Model.ckpt"
 pad_symbol="$"
 # ================================ train data ==================================
 batch_of_sentences = [
@@ -106,6 +108,7 @@ class LSTM_Model:
                         targets=train_data,       #true data
                         weights=weights)
     loss = tf.reduce_mean(seq)
+    tf.summary.scalar('loss', loss)
     return loss
 
   @define_scope
@@ -121,23 +124,30 @@ with tf.Session() as sess:
 
   print "\n----------------- TRAINING"
   if glob.glob(chenckpoint_file + "*"):
-    model_was_trained = False
     modelPath = saver.restore(sess, chenckpoint_file)
     print "\n----------------- Skip training. Loaded from: " + chenckpoint_file
+    model_was_trained = False
   else:
-    model_was_trained = True
+    tensorboard_logs_writer = tf.summary.FileWriter("tmp/basic")
+    tensorboard_merged = tf.summary.merge_all()
     for i in range(nb_epoches):
       for item in train_data:
         item = [item]
         sess.run(model.train, feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item}) 
 
-      if i % (nb_epoches/10) == 0:
-        l, result = sess.run([model.loss, model.prediction], feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item })
+      if i % (nb_epoches/100.0) == 0: #log loss
+        tensorboard_summary, l = sess.run([tensorboard_merged,model.loss], feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item })
+        tensorboard_logs_writer.add_summary(tensorboard_summary, i)
+
+      if i % (nb_epoches/10.0) == 0: #print model state
+        l, result = sess.run([ model.loss, model.prediction], feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item })
         print "step: %3d loss: %2.6f prediction: %s first true Y: %s" % (i,l,result,train_data[0])
+
+    model_was_trained = True
 
   print "\n----------------- AFTER TRAIN"
   if model_was_trained:
-    writer = tf.summary.FileWriter("tmp/basic", sess.graph)
+    writer = tf.summary.FileWriter("tmp/basic", sess.graph) # save model graph
     save_path = saver.save(sess, chenckpoint_file)
     print("Model saved in file: %s" % save_path)
 
