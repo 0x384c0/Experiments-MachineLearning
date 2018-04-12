@@ -19,7 +19,8 @@ run:
 	# python 5_iris_classifier.py
 	# python 6_word2vec_basic.py
 	# python 7_lstm_fixed_sequence_length.py
-	python 8_lstm_variable_sequence_length.py
+	# python 8_lstm_variable_sequence_length.py
+	python 9_lstm_text_generator.py --mode train
 
 #magenta
 magenta_install:
