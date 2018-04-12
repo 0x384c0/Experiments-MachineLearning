@@ -9,9 +9,8 @@ from tensorflow.contrib.seq2seq import sequence_loss
 import numpy as np
 from helpers import *
 # ==============================================================================
-learn_quality_multiplier = 30
-nb_epoches = 50 * learn_quality_multiplier
-learning_rate = 0.5# / learn_quality_multiplier
+nb_epoches = 500
+learning_rate = 1.5
 #
 batch_size = 1
 chenckpoint_file = "tmp/LSTM_Model.ckpt"
@@ -34,12 +33,14 @@ batch_of_sentences = read_files_to_array_of_strings([
   "train_data/batch_half.txt",
   "train_data/batch_half.txt",
   "train_data/batch_half.txt",
-  # "train_data/batch_circle.txt",
-  # "train_data/batch_circle.txt",
-  # "train_data/batch_circle.txt",
-  # "train_data/batch_cross.txt",
-  # "train_data/batch_cross.txt",
-  # "train_data/batch_cross.txt",
+  "train_data/batch_circle.txt",
+  "train_data/batch_circle.txt",
+  "train_data/batch_circle.txt",
+  "train_data/batch_circle.txt",
+  "train_data/batch_cross.txt",
+  "train_data/batch_cross.txt",
+  "train_data/batch_cross.txt",
+  "train_data/batch_cross.txt",
   ])
 # ==============================================================================
 print "\n----------------- BEFORE TRAIN"
@@ -56,7 +57,7 @@ train_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab) #train 
 input_data = sentence_to_token_ids(batch_of_sentences[0], vocab) #take first sentence
 sequence_length = len(input_data) # maximum length of sentences
 Input_data_one_hot = [np.zeros((sequence_length, num_classes))] # seed data
-Input_data_one_hot[0][0][(input_data[-1])] = 1 #first symbol of first sentence
+# Input_data_one_hot[0][0][(input_data[0])] = 1 #first symbol of first sentence
 
 print "batch_of_sentences"
 print batch_of_sentences
@@ -66,6 +67,14 @@ print "Train Data"
 print train_data
 print "Input_data_one_hot"
 print_one_hot(Input_data_one_hot)
+
+
+def generate_half_filled_one_hot(train_data):
+  a = np.asarray(train_data)
+  b = np.zeros((a.size, a.max()+1))
+  half_size = a.size/2
+  b[np.arange(half_size),a[half_size + 1:]] = 1
+  return b
 
 
 # ==============================================================================
@@ -142,17 +151,20 @@ with tf.Session() as sess:
     tensorboard_logs_writer = tf.summary.FileWriter("tmp/basic")
     tensorboard_merged = tf.summary.merge_all()
     for i in range(nb_epoches):
-      for item in train_data:
-        item = [item]
-        sess.run(model.train, feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item}) 
+      input_data_one_hot = None
+      train_data_item = None
+      for train_data_item in train_data:
+        input_data_one_hot = [generate_half_filled_one_hot(train_data_item)]
+        train_data_item = [train_data_item]
+        sess.run(model.train, feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item}) 
 
       if i % (nb_epoches/100.0) == 0: #log loss
-        tensorboard_summary, l = sess.run([tensorboard_merged,model.loss], feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item })
+        tensorboard_summary, l = sess.run([tensorboard_merged,model.loss], feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item })
         tensorboard_logs_writer.add_summary(tensorboard_summary, i)
 
       if i % (nb_epoches/10.0) == 0: #print model state
-        l, result = sess.run([ model.loss, model.prediction], feed_dict={model.Input_data: Input_data_one_hot, model.Train_data: item })
-        print "step: %3d loss: %2.6f prediction: %s first true Y: %s" % (i,l,result,train_data[0])
+        l, result = sess.run([ model.loss, model.prediction], feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item })
+        print "epoch: %3d/%3d loss: %2.6f prediction: %s first true Y: %s" % (i,nb_epoches,l,result,train_data[0])
 
     model_was_trained = True
 
