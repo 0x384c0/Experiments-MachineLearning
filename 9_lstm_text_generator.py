@@ -11,6 +11,8 @@ import glob
 import numpy as np
 import tensorflow as tf
 
+from tensorboard_logging import *
+
 
 class ModelNetwork:
     """
@@ -250,7 +252,7 @@ def main():
 
     # 1) TRAIN THE NETWORK
     if args.mode == "train":
-
+        logger = Logger('tmp/basic')
         check_restore_parameters(sess, saver)
         last_time = time.time()
         batch = np.zeros((batch_size, time_steps, in_size))
@@ -269,6 +271,9 @@ def main():
                 batch_y[:, j, :] = data[ind2, :]
 
             cst = net.train_batch(batch, batch_y)
+            
+            if i % (NUM_TRAIN_BATCHES/100.0) == 0:
+                logger.log_scalar("loss",cst,i)
 
             if (i % 10) == 0:
                 new_time = time.time()
