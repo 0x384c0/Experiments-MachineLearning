@@ -9,8 +9,11 @@ from tensorflow.contrib.seq2seq import sequence_loss
 import numpy as np
 from helpers import *
 # ==============================================================================
-nb_epoches = 500
+nb_epoches = 50
 learning_rate = 1.5
+
+time_steps = 100  # number of inputs of RNN - 1, 
+LEN_TEST_TEXT = 500 # Number of test characters of text to generate after training the network
 #
 batch_size = 1
 chenckpoint_file = "tmp/LSTM_Model.ckpt"
@@ -85,8 +88,8 @@ class LSTM_Model:
     self.num_classes = num_classes
     self.sequence_length = sequence_length
 
-    self.Input_data = tf.placeholder(tf.float32, [None, sequence_length, hidden_size]) # Input_data onehot
-    self.Train_data = tf.placeholder(tf.int32, [None, sequence_length])
+    self.Input_data = tf.placeholder(tf.float32, [None, sequence_length, hidden_size]) # X
+    self.Train_data = tf.placeholder(tf.int32, [None, sequence_length]) #Y
 
     self.prediction
     self.train
@@ -153,15 +156,15 @@ with tf.Session() as sess:
     for i in range(nb_epoches):
       input_data_one_hot = None
       train_data_item = None
+      #--------training---------
       for train_data_item in train_data:
         input_data_one_hot = [generate_half_filled_one_hot(train_data_item)]
         train_data_item = [train_data_item]
         sess.run(model.train, feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item}) 
-
+      #--------------------------
       if i % (nb_epoches/100.0) == 0: #log loss
         tensorboard_summary, l = sess.run([tensorboard_merged,model.loss], feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item })
         tensorboard_logs_writer.add_summary(tensorboard_summary, i)
-
       if i % (nb_epoches/10.0) == 0: #print model state
         l, result = sess.run([ model.loss, model.prediction], feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item })
         print "epoch: %3d/%3d loss: %2.6f prediction: %s first true Y: %s" % (i,nb_epoches,l,result,train_data[0])

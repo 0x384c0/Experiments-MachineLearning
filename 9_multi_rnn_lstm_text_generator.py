@@ -126,6 +126,8 @@ class ModelNetwork:
             }
         )
         self.lstm_last_state = next_lstm_state[0]
+        print "self.lstm_last_state"
+        print self.lstm_last_state
         return out[0][0]
 
     # xbatch must be (batch_size, timesteps, input_size)
@@ -160,6 +162,22 @@ def embed_to_vocab(data_, vocab):
         data[cnt, :] = v
         cnt += 1
     return data
+
+def batch_of_arrays_to_string(data, vocab):
+    gen_str = ""
+    print len(data[0])
+    i = 0
+    for line in data:
+        for char_one_hot in line:
+            element = np.argmax(char_one_hot)
+            gen_str += vocab[element]
+        gen_str += "\n"
+        i += 1
+        if (i > 3):
+            return gen_str
+    return gen_str
+
+
 
 
 def decode_embed(array, vocab):
@@ -196,7 +214,7 @@ def main():
     parser.add_argument(
         "--test_prefix",
         type=str,
-        default="  x ",
+        default="",
         help="Test text prefix to train the network."
     )
     parser.add_argument(
@@ -227,7 +245,7 @@ def main():
     lstm_size = 256  # 128
     num_layers = 2
     batch_size = 64  # 128
-    time_steps = 100  # 50
+    time_steps = 100  # 50 #  !!!! number of inputs of RNN - 1, 
 
     NUM_TRAIN_BATCHES = 300 # epoch
 
@@ -254,13 +272,21 @@ def main():
     if args.mode == "train":
         logger = Logger('tmp/basic')
         check_restore_parameters(sess, saver)
-        last_time = time.time()
         batch = np.zeros((batch_size, time_steps, in_size))
         batch_y = np.zeros((batch_size, time_steps, in_size))
         possible_batch_ids = range(data.shape[0] - time_steps - 1)
 
+        # print "data.shape[0]"
+        # print data.shape[0]
+
         for i in range(NUM_TRAIN_BATCHES):
             # Sample time_steps consecutive samples from the dataset text file
+
+            # print "possible_batch_ids"
+            # print possible_batch_ids
+            # print "batch_size"
+            # print batch_size
+
             batch_id = random.sample(possible_batch_ids, batch_size)
 
             for j in range(time_steps):
@@ -270,18 +296,19 @@ def main():
                 batch[:, j, :] = data[ind1, :]
                 batch_y[:, j, :] = data[ind2, :]
 
+
+            # print "batch"
+            # print batch_of_arrays_to_string(batch,vocab)
+            # print "batch_y"
+            # print batch_of_arrays_to_string(batch_y,vocab)
+
             cst = net.train_batch(batch, batch_y)
             
             if i % (NUM_TRAIN_BATCHES/100.0) == 0:
                 logger.log_scalar("loss",cst,i)
 
             if (i % 10) == 0:
-                new_time = time.time()
-                diff = new_time - last_time
-                last_time = new_time
-                print("batch: {}/{}  loss: {}  speed: {} batches / s".format(
-                    i, NUM_TRAIN_BATCHES, cst, 100 / diff
-                ))
+                print("batch: {}/{}  loss: {}".format(i, NUM_TRAIN_BATCHES, cst))
                 saver.save(sess, ckpt_file)
     elif args.mode == "talk":
         # 2) GENERATE LEN_TEST_TEXT CHARACTERS USING THE TRAINED NETWORK
@@ -289,17 +316,21 @@ def main():
 
         TEST_PREFIX = TEST_PREFIX.lower()
         for i in range(len(TEST_PREFIX)):
-            out = net.run_step(embed_to_vocab(TEST_PREFIX[i], vocab), i == 0)
+            next_sym_id_one_hot = net.run_step(embed_to_vocab(TEST_PREFIX[i], vocab), i == 0)
 
-        print("Sentence:")
+        print "next_sym_id_one_hot"
+        print next_sym_id_one_hot
+        print "embed_to_vocab(TEST_PREFIX[0], vocab)"
+        print embed_to_vocab(TEST_PREFIX[0], vocab)
+
         gen_str = TEST_PREFIX
         for i in range(LEN_TEST_TEXT):
-            # Sample character from the network according to the generated
-            # output probabilities.
-            element = np.random.choice(range(len(vocab)), p=out)
-            gen_str += vocab[element]
-            out = net.run_step(embed_to_vocab(vocab[element], vocab), False)
 
+            sym_id = np.argmax(next_sym_id_one_hot)
+            gen_str += vocab[sym_id]
+            next_sym_id_one_hot = net.run_step(embed_to_vocab(vocab[sym_id], vocab), False)
+
+        print("Sentence:")
         print(gen_str)
 
 
