@@ -9,7 +9,7 @@ from tensorflow.contrib.seq2seq import sequence_loss
 import numpy as np
 from helpers import *
 # ==============================================================================
-nb_epoches = 50
+nb_epoches = 15
 learning_rate = 1.5
 
 time_steps = 100  # number of inputs of RNN - 1, 
@@ -19,65 +19,29 @@ batch_size = 1
 chenckpoint_file = "tmp/LSTM_Model.ckpt"
 pad_symbol="$"
 # ================================ train data ==================================
-# batch_of_sentences = [
-# "- string 68",
-# "- string 2388",
-# "- string 62323",
-# "- string 6",
-# "- string 66468",
-# "+ rsting 538",
-# "+ rsting 528",
-# "+ rsting 338",
-# "+ rsting 638",
-# "+ rsting 228",
-# ]
-batch_of_sentences = read_files_to_array_of_strings([
-  "train_data/batch_half.txt",
-  "train_data/batch_half.txt",
-  "train_data/batch_half.txt",
-  "train_data/batch_half.txt",
-  "train_data/batch_circle.txt",
-  "train_data/batch_circle.txt",
-  "train_data/batch_circle.txt",
-  "train_data/batch_circle.txt",
-  "train_data/batch_cross.txt",
-  "train_data/batch_cross.txt",
-  "train_data/batch_cross.txt",
-  "train_data/batch_cross.txt",
-  ])
+TRAIN_DATA_FILE = "train_data/batch_text.txt"
+input_data,batch_of_sentences = read_file_to_input_and_train_data(TRAIN_DATA_FILE,time_steps,64) #batch_size)
 # ==============================================================================
 print "\n----------------- BEFORE TRAIN"
 batch_of_sentences = pad_strings(batch_of_sentences,pad_symbol)
 number_of_train_samples = len(batch_of_sentences)
 
-vocab, vocab_rev, num_classes = create_vocabulary_from_batch(batch_of_sentences)
+vocab, vocab_rev, num_classes = create_vocabulary_from_file(TRAIN_DATA_FILE)
 hidden_size = num_classes
 
-#train data
-train_data = sentence_to_token_ids_from_batch(batch_of_sentences, vocab) #train data for loss calc
+Train_data_batch = sentence_to_token_ids_from_batch(batch_of_sentences, vocab) #train data for loss calc
+Input_data_one_hot_batch = data_array_to_one_hot_from_batch(sentence_to_token_ids_from_batch(input_data, vocab), vocab) #seed data
 
-#seed data
-input_data = sentence_to_token_ids(batch_of_sentences[0], vocab) #take first sentence
-sequence_length = len(input_data) # maximum length of sentences
-Input_data_one_hot = [np.zeros((sequence_length, num_classes))] # seed data
-# Input_data_one_hot[0][0][(input_data[0])] = 1 #first symbol of first sentence
+sequence_length = len(Train_data_batch[0]) # maximum length of sentences
 
 print "batch_of_sentences"
 print batch_of_sentences
 print "Vocabulary"
 print(vocab)
-print "Train Data"
-print train_data
-print "Input_data_one_hot"
-print_one_hot(Input_data_one_hot)
-
-
-def generate_half_filled_one_hot(train_data):
-  a = np.asarray(train_data)
-  b = np.zeros((a.size, a.max()+1))
-  half_size = a.size/2
-  b[np.arange(half_size),a[half_size + 1:]] = 1
-  return b
+print "Train_data_batch"
+print Train_data_batch
+print "Input_data_one_hot_batch"
+print_one_hot(Input_data_one_hot_batch)
 
 
 # ==============================================================================
@@ -88,8 +52,8 @@ class LSTM_Model:
     self.num_classes = num_classes
     self.sequence_length = sequence_length
 
-    self.Input_data = tf.placeholder(tf.float32, [None, sequence_length, hidden_size]) # X
-    self.Train_data = tf.placeholder(tf.int32, [None, sequence_length]) #Y
+    self.Input_data = tf.placeholder(tf.float32, [None, sequence_length, hidden_size],name="Input_data") # X onehot
+    self.Train_data = tf.placeholder(tf.int32, [None, sequence_length],name="Train_data") #Y
 
     self.prediction
     self.train
@@ -121,17 +85,15 @@ class LSTM_Model:
 
   @define_scope
   def loss(self):
-    weights = tf.ones([batch_size, sequence_length])
     outputs = self._outputs
     train_data = self.Train_data
-    input_data = self.Input_data
+    weights = tf.ones([batch_size, sequence_length])
 
-
-    seq = sequence_loss(logits=outputs, #predictions
-                        targets=train_data,       #true data
+    seq = sequence_loss(logits=outputs,       #predictions
+                        targets=train_data,   #true data
                         weights=weights)
     loss = tf.reduce_mean(seq)
-    tf.summary.scalar('loss', loss)
+    tf.summary.scalar('loss', loss) #log loss
     return loss
 
   @define_scope
@@ -154,12 +116,10 @@ with tf.Session() as sess:
     tensorboard_logs_writer = tf.summary.FileWriter("tmp/basic")
     tensorboard_merged = tf.summary.merge_all()
     for i in range(nb_epoches):
-      input_data_one_hot = None
-      train_data_item = None
       #--------training---------
-      for train_data_item in train_data:
-        input_data_one_hot = [generate_half_filled_one_hot(train_data_item)]
-        train_data_item = [train_data_item]
+      for j in range(len(Train_data_batch)):
+        input_data_one_hot = [Input_data_one_hot_batch[j]]
+        train_data_item = [Train_data_batch[j]]
         sess.run(model.train, feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item}) 
       #--------------------------
       if i % (nb_epoches/100.0) == 0: #log loss
@@ -167,7 +127,7 @@ with tf.Session() as sess:
         tensorboard_logs_writer.add_summary(tensorboard_summary, i)
       if i % (nb_epoches/10.0) == 0: #print model state
         l, result = sess.run([ model.loss, model.prediction], feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item })
-        print "epoch: %3d/%3d loss: %2.6f prediction: %s first true Y: %s" % (i,nb_epoches,l,result,train_data[0])
+        print "epoch: %3d/%3d loss: %2.6f prediction: %s first true Y: %s" % (i,nb_epoches,l,result,train_data_item[0])
 
     model_was_trained = True
 
@@ -177,6 +137,14 @@ with tf.Session() as sess:
     save_path = saver.save(sess, chenckpoint_file)
     print("Model saved in file: %s" % save_path)
 
-  print "\nResult:"
-  result = sess.run(model.prediction, feed_dict={model.Input_data: Input_data_one_hot, })
-  print token_ids_to_sentence(result,vocab_rev).replace(pad_symbol, "")
+  print "Generating string:\n"
+  string_token_ids = one_hot_batch_to_array(Input_data_one_hot_batch[0]) 
+  for i in range(LEN_TEST_TEXT):
+    if i % (LEN_TEST_TEXT/10.0) == 0:
+      print "Generating string: %3d/%3d" % (i,LEN_TEST_TEXT)
+    history_data_one_hot = string_token_ids[-time_steps:]
+    input_data_one_hot = [array_to_one_hot_batch(history_data_one_hot,len(vocab))]
+    new_string_token_ids = sess.run(model.prediction, feed_dict={model.Input_data: input_data_one_hot})
+    string_token_ids.append(new_string_token_ids[0][-1]) #last item - it is a generated symbol id
+
+  print token_ids_to_sentence(string_token_ids,vocab_rev).replace(pad_symbol, "")

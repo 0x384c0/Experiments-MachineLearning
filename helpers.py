@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import random
 
 # Weight Initialization function
 def weight_variable(shape):
@@ -47,6 +48,19 @@ def data_array_to_one_hot_from_batch(batch, vocab_array):
     batch_of_token_ids_one_hot.append(data_array_to_one_hot(data_array,vocab_array))
   return batch_of_token_ids_one_hot
 
+def one_hot_batch_to_array(one_hot_batch):
+  array = []
+  for one_hot in one_hot_batch:
+    array.append(np.argmax(one_hot))
+  return array
+
+def array_to_one_hot_batch(array,max_value):
+  one_hot_batch = np.zeros((len(array), max_value+1))
+  one_hot_batch[np.arange(len(array)),array] = 1
+  return one_hot_batch
+
+
+
 # vocabulary
 vocab_start_id = 1
 def len_of_vocab(vocab):
@@ -76,6 +90,12 @@ def create_vocabulary_from_batch(batch):
   vocab_rev = {v: k for k, v in vocab.iteritems()}
 
   return vocab, vocab_rev, len_of_vocab(vocab)
+
+def create_vocabulary_from_file(file_name):
+  string = ""
+  with open(file_name, 'r') as f:
+    string += f.read()
+  return create_vocabulary(string)
 
 
 def sentence_to_token_ids(sentence, vocabulary):
@@ -110,6 +130,24 @@ def read_files_to_array_of_strings(file_names):
     strings.append(open(file_name).read())
   return strings
 
+def read_file_to_input_and_train_data(file_name,time_steps,batch_size):
+  input_data = []
+  train_data = []
+  string = ""
+  with open(file_name, 'r') as f:
+    string += f.read()
+
+  possible_batch_ids = range(len(string) - time_steps - 1)
+  for i in range(batch_size):
+    batch_id = random.choice(possible_batch_ids)
+    input_data.append(string[batch_id:batch_id + time_steps])
+    train_data.append(string[batch_id + 1:batch_id + time_steps + 1])
+
+  return input_data,train_data
+
+
+
+
 # Lazy Property Decorator
 import functools
 def define_scope(function):
@@ -124,4 +162,3 @@ def define_scope(function):
     return getattr(self, attribute)
 
   return decorator
-# ==============================================================================

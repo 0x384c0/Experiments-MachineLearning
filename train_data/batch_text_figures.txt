@@ -1,0 +1,77 @@
+
+       
+  xxx  
+ x   x 
+x     x
+ x   x 
+  xxx  
+       
+       
+
+x     x
+ x   x 
+  x x  
+   x   
+  x x  
+ x   x 
+x     x
+
+x     x
+ x   x 
+  x x  
+   x   
+  x x  
+ x   x 
+x     x
+
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+
+x     x
+ x   x 
+  x x  
+   x   
+  x x  
+ x   x 
+x     x
+
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+xxxx   
+
+       
+  xxx  
+ x   x 
+x     x
+ x   x 
+  xxx  
+       
+       
+       
+
+       
+  xxx  
+ x   x 
+x     x
+ x   x 
+  xxx  
+       
+       
+       
