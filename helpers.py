@@ -137,6 +137,9 @@ def read_file_to_input_and_train_data(file_name,time_steps,batch_size):
   with open(file_name, 'r') as f:
     string += f.read()
 
+  if len(string) < time_steps + 2:
+    raise ValueError("Lenght of \"" + file_name + "\" file (" + str(len(string)) + ") must be greater then " + str(time_steps + 2))
+
   possible_batch_ids = range(len(string) - time_steps - 1)
   for i in range(batch_size):
     batch_id = random.choice(possible_batch_ids)
