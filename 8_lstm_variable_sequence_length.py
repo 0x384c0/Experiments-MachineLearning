@@ -14,11 +14,11 @@ from helpers import *
 # CONFIG ============================================================================
 # ===================================================================================
 TRAIN_DATA_FILE = "train_data/batch_text.txt"
-LEN_TEST_TEXT = 100 # Number of test characters of text to generate after training the network
-TRAIN = True
+LEN_TEST_TEXT = 500 # Number of test characters of text to generate after training the network
+TRAIN = False
 #
-nb_epoches = 5
-learning_rate = 1.5
+nb_epoches = 500
+learning_rate = 0.5
 time_steps = 100  # number of inputs of RNN - 1, history
 train_data_batch_size = 64
 #
@@ -91,6 +91,17 @@ class LSTM_Model:
 # ===================================================================================
 # HELPER FUNCTIONS ==================================================================
 # ===================================================================================
+def generate_train_batches():
+  input_data,batch_of_sentences = read_file_to_input_and_train_data(TRAIN_DATA_FILE,time_steps,train_data_batch_size) #batch_size)
+
+  batch_of_sentences = pad_strings(batch_of_sentences,pad_symbol)
+
+  Train_data_batch = sentence_to_token_ids_from_batch(batch_of_sentences, vocab) #train data for loss calc
+  Input_data_one_hot_batch = data_array_to_one_hot_from_batch(sentence_to_token_ids_from_batch(input_data, vocab), vocab) #seed data
+
+  return Train_data_batch,Input_data_one_hot_batch
+
+
 def load_state(sess):
   if glob.glob(chenckpoint_file + "*"):
     modelPath = saver.restore(sess, chenckpoint_file)
@@ -142,23 +153,15 @@ def generate_string(history_batch_one_hot,sess,model):
 # ===================================================================================
 # PREPARING DATA ====================================================================
 # ===================================================================================
-# train data 
-input_data,batch_of_sentences = read_file_to_input_and_train_data(TRAIN_DATA_FILE,time_steps,train_data_batch_size) #batch_size)
-# vocabs, batches, etc
-batch_of_sentences = pad_strings(batch_of_sentences,pad_symbol)
-number_of_train_samples = len(batch_of_sentences)
-
+# vocabs
 vocab, vocab_rev, num_classes = create_vocabulary_from_file(TRAIN_DATA_FILE)
 hidden_size = num_classes
+# train data 
+Train_data_batch,Input_data_one_hot_batch = generate_train_batches()
+sequence_length = len(Train_data_batch[0])
 
-Train_data_batch = sentence_to_token_ids_from_batch(batch_of_sentences, vocab) #train data for loss calc
-Input_data_one_hot_batch = data_array_to_one_hot_from_batch(sentence_to_token_ids_from_batch(input_data, vocab), vocab) #seed data
-
-sequence_length = len(Train_data_batch[0]) # maximum length of sentences
 
 print "\n----------------- BEFORE TRAIN"
-print "batch_of_sentences"
-print batch_of_sentences
 print "Vocabulary"
 print(vocab)
 print "Train_data_batch"
@@ -175,19 +178,21 @@ with tf.Session() as sess:
   tensorboard_logs_writer,tensorboard_merged = init_logger()
 
   load_state(sess)
-  print "\n----------------- TRAINING"
-  
-  for i in range(nb_epoches):
-    #--------training---------
-    for j in range(len(Train_data_batch)):
-      input_data_one_hot = [Input_data_one_hot_batch[j]]
-      train_data_item = [Train_data_batch[j]]
-      sess.run(model.train, feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item}) 
+  if TRAIN:
+    print "\n----------------- TRAINING"
+    for i in range(nb_epoches):
+      #--------training---------
+      for j in range(len(Train_data_batch)):
+        input_data_one_hot = [Input_data_one_hot_batch[j]]
+        train_data_item = [Train_data_batch[j]]
+        sess.run(model.train, feed_dict={model.Input_data: input_data_one_hot, model.Train_data: train_data_item}) 
 
-    #---------logs-------------
-    log_loss(i,nb_epoches,tensorboard_merged,tensorboard_logs_writer,model,input_data_one_hot,train_data_item)
-    log_progress(i,nb_epoches,model,input_data_one_hot,train_data_item)
-    #--------------------------
+      #---------logs-------------
+      log_loss(i,nb_epoches,tensorboard_merged,tensorboard_logs_writer,model,input_data_one_hot,train_data_item)
+      log_progress(i,nb_epoches,model,input_data_one_hot,train_data_item)
+      #----------re generate train data-------------
+      Train_data_batch,Input_data_one_hot_batch = generate_train_batches()
+
 
   print "\n----------------- AFTER TRAIN"
 
