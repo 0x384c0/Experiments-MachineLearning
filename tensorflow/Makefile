@@ -21,6 +21,7 @@ run:
 	# python 7_lstm_fixed_sequence_length.py
 	python 8_lstm_variable_sequence_length.py
 	# python 9_multi_rnn_lstm_text_generator.py --mode train
+	#python 10_reinforsment_learn.py
 
 #magenta
 magenta_install:
