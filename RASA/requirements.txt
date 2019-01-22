@@ -1,0 +1,4 @@
+prompt-toolkit==1.0.14
+IPython==5.4.0
+sklearn_crfsuite
+rasa
